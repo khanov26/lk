@@ -1,0 +1,15 @@
+.contacts-list-table {
+    min-width: 1200px;
+}
+
+.contacts-list-table input {
+    max-width: 185px;
+}
+
+.contacts-list-table tr {
+    cursor: pointer;
+}
+
+.contacts-list-table .search-match {
+    background-color: yellow;
+}

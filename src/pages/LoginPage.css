@@ -1,0 +1,11 @@
+.login-page {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(var(--bs-light-rgb));
+}
+
+.login-form {
+    width: 250px;
+}

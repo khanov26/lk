@@ -1,0 +1,13 @@
+.error-page {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.error-page__image {
+    margin-top: 3rem;
+    width: min(100%, 600px);
+}
