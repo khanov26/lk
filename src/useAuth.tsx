@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState} from "react";
+import React, {createContext, useCallback, useContext, useState} from "react";
 
 const baseUrl = 'http://localhost:3001'
 
@@ -29,10 +29,10 @@ const getUserFromStorage = (): AuthSubject | null => {
     return userFromStorage ? JSON.parse(userFromStorage) : null;
 };
 
-export const AuthProvider: React.FC = (props) => {
-    const [user, setUser] = useState<AuthSubject | null>(getUserFromStorage());
+export const AuthProvider: React.FC = ({children}) => {
+    const [user, setUser] = useState<AuthSubject | null>(getUserFromStorage);
 
-    const login = async (email: string, password: string) => {
+    const login = useCallback(async (email: string, password: string) => {
         const response = await fetch(`${baseUrl}/login`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -50,16 +50,16 @@ export const AuthProvider: React.FC = (props) => {
         } as AuthSubject;
         setUser(currentUser);
         localStorage.setItem('user', JSON.stringify(currentUser));
-    };
+    }, []);
 
-    const logout = () => {
+    const logout = useCallback(() => {
         setUser(null);
         localStorage.removeItem('user');
-    };
+    }, []);
 
     const value: AuthContextType = {user, login, logout};
 
-    return <AuthContext.Provider value={value}>{props.children}</AuthContext.Provider>
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 };
 
 export function useAuth() {

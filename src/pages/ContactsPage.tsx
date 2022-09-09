@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import Contact from "../types/Contact";
 import ContactsList from "../components/ContactsList";
 import Spinner from "../components/Spinner";
@@ -23,12 +23,50 @@ const ContactsPage: React.FC = () => {
     const [page, setPage] = useState(Number(searchParams.get('page') || 1));
     const [totalContactsQuantity, setTotalContactsQuantity] = useState(0);
 
+    const handlePageChange = React.useCallback((page: number) => {
+        setPage(page);
+    }, []);
+
+    const [searchTerm, setSearchTerm] = useState(decodeURI(searchParams.get('search') || ''));
+
+    const handleSearchTermUpdate = useMemo(() => debounce((searchTerm: string) => {
+        setSearchTerm(searchTerm.trim());
+        setPage(1);
+    }, 300), []);
+
     const {user, logout} = useAuth();
     const navigate = useNavigate();
 
     const CONTACTS_PER_PAGE = 10;
 
-    const deleteContact = (contact: Contact) => {
+    const getContacts = useCallback(() => {
+        const url = new URL(baseUrl);
+        url.searchParams.set('_page', String(page));
+        url.searchParams.set('_limit', String(CONTACTS_PER_PAGE));
+        url.searchParams.set('q', encodeURI(searchTerm));
+
+        setLoading(true);
+        fetch(url.toString(), {
+            headers: user?.accessToken ? {Authorization: `Bearer ${user.accessToken}`} : undefined
+        }).then(response => {
+            if (response.status === 401) {
+                logout();
+                navigate('/login', {replace: true});
+            }
+            const totalQuantity = Number(response.headers.get('X-Total-Count'));
+            setTotalContactsQuantity(totalQuantity);
+
+            return response.json();
+        }).then(contacts => {
+            setContacts(contacts);
+            setLoading(false);
+        }).catch(error => {
+            console.error(error);
+            setError(true);
+        });
+    }, [logout, navigate, page, searchTerm, user?.accessToken]);
+
+    const deleteContact = useCallback((contact: Contact) => {
         const url = new URL(`${baseUrl}/${contact.id}`);
         fetch(url.toString(), {
             method: 'DELETE',
@@ -42,7 +80,7 @@ const ContactsPage: React.FC = () => {
         }).catch(error => {
             console.error(error);
         });
-    };
+    }, [getContacts, logout, navigate, user?.accessToken]);
 
     const updateContact = (contact: Contact) => {
         const url = new URL(`${baseUrl}/${contact.id}`);
@@ -77,39 +115,7 @@ const ContactsPage: React.FC = () => {
         });
     };
 
-    const getContacts = () => {
-        const url = new URL(baseUrl);
-        url.searchParams.set('_page', String(page));
-        url.searchParams.set('_limit', String(CONTACTS_PER_PAGE));
-        url.searchParams.set('q', encodeURI(searchTerm));
-
-        setLoading(true);
-        fetch(url.toString(), {
-            headers: user?.accessToken ? {Authorization: `Bearer ${user.accessToken}`} : undefined
-        }).then(response => {
-            if (response.status === 401) {
-                logout();
-                navigate('/login', {replace: true});
-            }
-            const totalQuantity = Number(response.headers.get('X-Total-Count'));
-            setTotalContactsQuantity(totalQuantity);
-
-            const maxPageQuantity = Math.ceil(totalQuantity / CONTACTS_PER_PAGE);
-            if (maxPageQuantity > 0 && page > maxPageQuantity) {
-                setPage(maxPageQuantity);
-            }
-
-            return response.json();
-        }).then(contacts => {
-            setContacts(contacts);
-            setLoading(false);
-        }).catch(error => {
-            console.error(error);
-            setError(true);
-        });
-    };
-
-    const addContact = React.useCallback((contactData: Omit<Contact, 'id'>) => {
+    const addContact = useCallback((contactData: Omit<Contact, 'id'>) => {
         const url = new URL(baseUrl);
         const authHeader = user?.accessToken ? {Authorization: `Bearer ${user.accessToken}`} : undefined;
         fetch(url.toString(), {
@@ -129,29 +135,25 @@ const ContactsPage: React.FC = () => {
             navigate(`${contact.id}`);
         });
 
-    }, []);
-
-    const handlePageChange = React.useCallback((page: number) => {
-        setPage(page);
-    }, []);
-
-    const [searchTerm, setSearchTerm] = useState(decodeURI(searchParams.get('search') || ''));
-
-    const handleSearchTermUpdate = useCallback(debounce((searchTerm: string) => {
-        setSearchTerm(searchTerm.trim());
-        setPage(1);
-    }, 300), []);
+    }, [logout, navigate, user?.accessToken]);
 
     useEffect(() => {
-        const newSearchParams = new URLSearchParams(searchParams);
-        newSearchParams.set('page', String(page));
-        newSearchParams.set('search', encodeURI(searchTerm));
+        const newSearchParams = new URLSearchParams();
+
+        if (searchTerm) {
+            newSearchParams.set('search', encodeURI(searchTerm));
+        }
+        
+        if (page > 1) {
+            newSearchParams.set('page', String(page));
+        }
+
         setSearchParams(newSearchParams, {replace: true});
-    }, [page, searchTerm]);
+    }, [page, searchTerm, setSearchParams]);
 
     useEffect(() => {
         getContacts();
-    }, [page, searchTerm]);
+    }, [getContacts]);
 
     if (error) {
         return (
@@ -170,10 +172,19 @@ const ContactsPage: React.FC = () => {
                     <Spinner/>
                 </div> :
                 <>
-                    <ContactsList contacts={contacts} onDelete={deleteContact} onUpdate={updateContact}
-                                  searchTerm={searchTerm}/>
-                    <Pagination elementPerPage={CONTACTS_PER_PAGE} totalElementsQuantity={totalContactsQuantity}
-                                maxPageQuantity={5} currentPage={page} onPageChange={handlePageChange}/>
+                    <ContactsList
+                        contacts={contacts}
+                        onDelete={deleteContact}
+                        onUpdate={updateContact}
+                        searchTerm={searchTerm}
+                    />
+                    <Pagination
+                        elementPerPage={CONTACTS_PER_PAGE}
+                        totalElementsQuantity={totalContactsQuantity}
+                        maxPageQuantity={5}
+                        currentPage={page}
+                        onPageChange={handlePageChange}
+                    />
                 </>
             }
         </div>

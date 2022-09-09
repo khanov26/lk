@@ -39,7 +39,7 @@ const Pagination: React.FC<Props> = (props) => {
         .fill(startPage)
         .map((value, index) => value + index);
 
-    const handlePageClick = (page: number) => (event: MouseEvent<HTMLAnchorElement>) => {
+    const handlePageClick = (page: number) => (event: MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         onPageChange(page);
     }
@@ -49,28 +49,28 @@ const Pagination: React.FC<Props> = (props) => {
             <ul className="pagination justify-content-center">
                 {showPrevLink &&
                 <li key="prev" className="page-item">
-                    <a href="#" onClick={handlePageClick(currentPage - 1)} className="page-link">
+                    <button onClick={handlePageClick(currentPage - 1)} className="page-link">
                         <span aria-hidden="true">&laquo;</span>
-                    </a>
+                    </button>
                 </li>
                 }
 
                 {pages.map(page => {
                     return page === currentPage ?
                         <li key={page} className="page-item active">
-                            <a className="page-link">{page}</a>
+                            <button className="page-link">{page}</button>
                         </li> :
                         <li key={page} className="page-item">
-                            <a href="#" onClick={handlePageClick(page)} className="page-link">{page}</a>
+                            <button onClick={handlePageClick(page)} className="page-link">{page}</button>
                         </li>
                 })}
 
 
                 {showNextLink &&
                 <li key="next" className="page-item">
-                    <a href="#" onClick={handlePageClick(currentPage + 1)} className="page-link">
+                    <button onClick={handlePageClick(currentPage + 1)} className="page-link">
                         <span aria-hidden="true">&raquo;</span>
-                    </a>
+                    </button>
                 </li>
                 }
             </ul>

@@ -44,8 +44,12 @@ const Header: React.FC = () => {
                                     onClick={handleLogoutButtonClick}>Выйти
                             </button>
                         </> :
-                        <button type="button" className="btn btn-outline-light me-2"
-                                onClick={handleLoginButtonClick}>Войти
+                        <button 
+                            type="button" 
+                            className="btn btn-outline-light me-2"
+                            onClick={handleLoginButtonClick}
+                        >
+                            Войти
                         </button>
                     }
                 </div>

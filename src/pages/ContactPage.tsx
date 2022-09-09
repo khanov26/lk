@@ -41,7 +41,7 @@ const ContactPage: React.FC = () => {
         }).finally(() => {
             setLoading(false);
         });
-    }, [contactId]);
+    }, [contactId, logout, navigate, user?.accessToken]);
 
     if (error) {
         return (

@@ -1,4 +1,4 @@
-import React, {ChangeEventHandler, useEffect, useState} from 'react';
+import React, {ChangeEventHandler, useState} from 'react';
 
 interface Props {
     onChange: (searchTerm: string) => void;
@@ -14,8 +14,13 @@ const Search: React.FC<Props> = ({onChange, defaultValue}) => {
     };
 
     return (
-        <input type="search" value={value} onChange={handleChange}
-               className="form-control contact-search" placeholder="Поиск"/>
+        <input
+            type="search"
+            value={value}
+            onChange={handleChange}
+            className="form-control contact-search"
+            placeholder="Поиск"
+        />
     );
 };
 
